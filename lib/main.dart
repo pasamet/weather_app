@@ -1,6 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:weather_app/src/app/app.dart';
 
-void main() {
+import 'src/app/app.dart';
+import 'src/app/configuration.dart';
+import 'src/app/di.dart';
+
+void main() async {
+  await setupDependencies(defaultConfiguration);
   runApp(const App());
 }
