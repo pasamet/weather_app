@@ -21,6 +21,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => WeatherCubit(_getIt(), widget.location),
-        child: const WeatherContent(),
+        child: WeatherContent(),
       );
 }

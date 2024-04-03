@@ -6,14 +6,18 @@ import '../common/dimensions.dart';
 import 'cubit.dart';
 
 class WeatherContent extends StatelessWidget {
-  const WeatherContent({super.key});
-
+  WeatherContent({super.key});
+  final _refreshKey = GlobalKey<RefreshIndicatorState>(debugLabel: 'refresh');
   @override
   Widget build(BuildContext context) => BlocBuilder<WeatherCubit, WeatherState>(
         builder: (context, state) => Scaffold(
           appBar: AppBar(
             title: Text(state.title),
             actions: [
+              IconButton(
+                onPressed: () => _refreshKey.currentState?.show(),
+                icon: const Icon(Icons.refresh),
+              ),
               _buildUnitSelection(context, state),
             ],
           ),
@@ -69,67 +73,85 @@ class WeatherContent extends StatelessWidget {
         ),
       );
 
-  Widget _buildLoaded(BuildContext context, LoadedState state) {
-    var textTheme = Theme.of(context).textTheme;
-    return Column(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: containerInsets,
-            child: Column(
-              children: [
-                Text(
-                  state.selectedWeekDay.longText(),
-                  style: textTheme.headlineMedium,
-                ),
-                gap16,
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    state.description,
-                  ),
-                ),
-                Expanded(child: Image.network(state.largeIconUri.toString())),
-                Text(
-                  state.temperature.toText(state.temperatureUnit),
-                  style: textTheme.displayMedium,
-                ),
-                gap16,
-                Row(
-                  children: [
-                    const Text('Humidity:'),
-                    gap16,
-                    Text('${state.humidityPercent.round()}%'),
-                  ],
-                ),
-                gap4,
-                Row(
-                  children: [
-                    const Text('Pressure:'),
-                    gap16,
-                    Text('${state.pressureHPa.round()} hPa'),
-                  ],
-                ),
-                gap4,
-                Row(
-                  children: [
-                    const Text('Wind:'),
-                    gap16,
-                    Text('${state.windSpeedKmH.round()} km/h'),
-                  ],
-                ),
-              ],
+  Widget _buildLoaded(BuildContext context, LoadedState state) => LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints viewportConstraints) =>
+            RefreshIndicator(
+          key: _refreshKey,
+          onRefresh: () => context.read<WeatherCubit>().onRefresh(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: viewportConstraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: _buildLoadedContent(context, state),
+              ),
             ),
           ),
         ),
-        SizedBox(height: 160, child: _buildList(context, state)),
-      ],
+      );
+
+  Widget _buildLoadedContent(BuildContext context, LoadedState state) {
+    var textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: containerInsets,
+      child: Column(
+        children: [
+          Text(
+            state.selectedWeekDay.longText(),
+            style: textTheme.headlineMedium,
+          ),
+          gap16,
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              state.description,
+            ),
+          ),
+          Image.network(
+            height: 200,
+            width: 200,
+            state.largeIconUri.toString(),
+            fit: BoxFit.scaleDown,
+          ),
+          Text(
+            state.temperature.toText(state.temperatureUnit),
+            style: textTheme.displayMedium,
+          ),
+          gap16,
+          Row(
+            children: [
+              const Text('Humidity:'),
+              gap16,
+              Text('${state.humidityPercent.round()}%'),
+            ],
+          ),
+          gap4,
+          Row(
+            children: [
+              const Text('Pressure:'),
+              gap16,
+              Text('${state.pressureHPa.round()} hPa'),
+            ],
+          ),
+          gap4,
+          Row(
+            children: [
+              const Text('Wind:'),
+              gap16,
+              Text('${state.windSpeedKmH.round()} km/h'),
+            ],
+          ),
+          const Spacer(),
+          SizedBox(height: 120, child: _buildList(context, state)),
+        ],
+      ),
     );
   }
 
   ListView _buildList(BuildContext context, LoadedState state) =>
       ListView.builder(
-        padding: containerInsets,
         scrollDirection: Axis.horizontal,
         itemCount: state.days.length,
         itemBuilder: (context, index) => _buildItem(context, state, index),
