@@ -130,17 +130,16 @@ class WeatherCubit extends Cubit<WeatherState> {
       var filteredForecasts = _filterByTimeOfTheDay(forecasts, now.timeOfDay)
           .toList(growable: false);
 
-      var days = filteredForecasts.map(
-        (d) {
-          debugPrint(d.date.toLocal().toString());
-          return Day(
-            weekDay: WeekDay.from(d.date),
-            smallIconUri: d.smallIconUri,
-            minTemperature: d.min,
-            maxTemperature: d.max,
-          );
-        },
-      ).toList(growable: false);
+      var days = filteredForecasts
+          .map(
+            (d) => Day(
+              weekDay: WeekDay.from(d.date),
+              smallIconUri: d.smallIconUri,
+              minTemperature: d.min,
+              maxTemperature: d.max,
+            ),
+          )
+          .toList(growable: false);
 
       var selectedDay = filteredForecasts[selectedDayIndex];
 

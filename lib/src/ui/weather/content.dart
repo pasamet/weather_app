@@ -14,10 +14,11 @@ class WeatherContent extends StatelessWidget {
           appBar: AppBar(
             title: Text(state.title),
             actions: [
-              IconButton(
-                onPressed: () => _refreshKey.currentState?.show(),
-                icon: const Icon(Icons.refresh),
-              ),
+              if (!_isMobilePlatform(context))
+                IconButton(
+                  onPressed: () => _refreshKey.currentState?.show(),
+                  icon: const Icon(Icons.refresh),
+                ),
               _buildUnitSelection(context, state),
             ],
           ),
@@ -73,7 +74,36 @@ class WeatherContent extends StatelessWidget {
         ),
       );
 
-  Widget _buildLoaded(BuildContext context, LoadedState state) => LayoutBuilder(
+  Widget _buildLoaded(BuildContext context, LoadedState state) =>
+      OrientationBuilder(
+        builder: (context, orientation) => switch (orientation) {
+          Orientation.portrait => Column(
+              children: [
+                Expanded(
+                  child: _wrapInRefreshIndicator(
+                    state,
+                    _buildLoadedContent(context, state),
+                  ),
+                ),
+                _buildList(context, state, Axis.horizontal),
+              ],
+            ),
+          Orientation.landscape => Row(
+              children: [
+                Expanded(
+                  child: _wrapInRefreshIndicator(
+                    state,
+                    _buildLoadedContent(context, state),
+                  ),
+                ),
+                _buildList(context, state, Axis.vertical),
+              ],
+            ),
+        },
+      );
+
+  Widget _wrapInRefreshIndicator(LoadedState state, Widget child) =>
+      LayoutBuilder(
         builder: (BuildContext context, BoxConstraints viewportConstraints) =>
             RefreshIndicator(
           key: _refreshKey,
@@ -85,7 +115,7 @@ class WeatherContent extends StatelessWidget {
                 minHeight: viewportConstraints.maxHeight,
               ),
               child: IntrinsicHeight(
-                child: _buildLoadedContent(context, state),
+                child: child,
               ),
             ),
           ),
@@ -143,18 +173,25 @@ class WeatherContent extends StatelessWidget {
               Text('${state.windSpeedKmH.round()} km/h'),
             ],
           ),
-          const Spacer(),
-          SizedBox(height: 120, child: _buildList(context, state)),
         ],
       ),
     );
   }
 
-  ListView _buildList(BuildContext context, LoadedState state) =>
-      ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: state.days.length,
-        itemBuilder: (context, index) => _buildItem(context, state, index),
+  Widget _buildList(
+    BuildContext context,
+    LoadedState state,
+    Axis scrollDirection,
+  ) =>
+      SizedBox(
+        height: scrollDirection == Axis.horizontal ? 160 : null,
+        width: scrollDirection == Axis.vertical ? 160 : null,
+        child: ListView.builder(
+          padding: containerInsets,
+          scrollDirection: scrollDirection,
+          itemCount: state.days.length,
+          itemBuilder: (context, index) => _buildItem(context, state, index),
+        ),
       );
 
   Material _buildItem(BuildContext context, LoadedState state, int index) {
@@ -169,6 +206,7 @@ class WeatherContent extends StatelessWidget {
       color: selected ? colorsScheme.primaryContainer : null,
       child: SizedBox(
         width: 120,
+        height: 120,
         child: InkResponse(
           onTap: () => context.read<WeatherCubit>().onDaySelected(index),
           child: GridTile(
@@ -223,3 +261,8 @@ extension on Temperature {
         TemperatureUnit.fahrenheit => '${inFahrenheit.round()} °F',
       };
 }
+
+bool _isMobilePlatform(BuildContext context) => {
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }.contains(Theme.of(context).platform);
