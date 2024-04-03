@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/geocoding_repository.dart';
@@ -117,25 +118,31 @@ class WeatherCubit extends Cubit<WeatherState> {
     TemperatureUnit? temperatureUnit,
   }) {
     var s = state;
-    var df = dailyForecast;
-    if (df != null) {
-      assert(df.isNotEmpty);
-      selectedDayIndex ??= s is LoadedState && s.selectedDayIndex < df.length
-          ? s.selectedDayIndex
-          : 0;
+    var forecasts = dailyForecast;
+    if (forecasts != null) {
+      assert(forecasts.isNotEmpty);
+      selectedDayIndex ??=
+          s is LoadedState && s.selectedDayIndex < forecasts.length
+              ? s.selectedDayIndex
+              : 0;
 
-      var days = df
-          .map(
-            (d) => Day(
-              weekDay: WeekDay.from(d.date),
-              smallIconUri: d.smallIconUri,
-              minTemperature: d.min,
-              maxTemperature: d.max,
-            ),
-          )
+      var now = _splitDayAndTime(DateTime.now());
+      var filteredForecasts = _filterByTimeOfTheDay(forecasts, now.timeOfDay)
           .toList(growable: false);
 
-      var selectedDay = df[selectedDayIndex];
+      var days = filteredForecasts.map(
+        (d) {
+          debugPrint(d.date.toLocal().toString());
+          return Day(
+            weekDay: WeekDay.from(d.date),
+            smallIconUri: d.smallIconUri,
+            minTemperature: d.min,
+            maxTemperature: d.max,
+          );
+        },
+      ).toList(growable: false);
+
+      var selectedDay = filteredForecasts[selectedDayIndex];
 
       emit(
         LoadedState(
@@ -200,3 +207,63 @@ class WeatherCubit extends Cubit<WeatherState> {
     }
   }
 }
+
+Iterable<Forecast> _filterByTimeOfTheDay(
+  List<Forecast> forecasts,
+  Duration timeOfTheDay,
+) =>
+    _groupByDayStart(forecasts)
+        .values
+        .map((value) => _findClosestByTimeOfDay(value, timeOfTheDay));
+
+({DateTime day, Duration timeOfDay}) _splitDayAndTime(DateTime dateTime) {
+  var day = _startOfTheDay(dateTime);
+  var result = (
+    day: day,
+    timeOfDay: dateTime.difference(day),
+  );
+  assert(!result.timeOfDay.isNegative);
+  return result;
+}
+
+DateTime _startOfTheDay(DateTime date) => date.toLocal().copyWith(
+      hour: 0,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0,
+    );
+
+Map<DateTime, Iterable<_TimeOfDayAndForecast>> _groupByDayStart(
+  List<Forecast> forecasts,
+) {
+  var result = <DateTime, List<_TimeOfDayAndForecast>>{};
+  for (var forecast in forecasts) {
+    var date = _splitDayAndTime(forecast.date);
+    var value = (timeOfDay: date.timeOfDay, forecast: forecast);
+    result.update(
+      date.day,
+      (list) => list..add(value),
+      ifAbsent: () => [value],
+    );
+  }
+  return result;
+}
+
+Forecast _findClosestByTimeOfDay(
+  Iterable<_TimeOfDayAndForecast> list,
+  Duration duration,
+) =>
+    list
+        .map(
+          (e) => (
+            timeOfDay: (duration - e.timeOfDay).abs(),
+            forecast: e.forecast,
+          ),
+        )
+        .reduce(
+          (min, element) => min.timeOfDay < element.timeOfDay ? min : element,
+        )
+        .forecast;
+
+typedef _TimeOfDayAndForecast = ({Duration timeOfDay, Forecast forecast});

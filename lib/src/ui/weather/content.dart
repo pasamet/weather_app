@@ -132,26 +132,46 @@ class WeatherContent extends StatelessWidget {
         padding: containerInsets,
         scrollDirection: Axis.horizontal,
         itemCount: state.days.length,
-        itemBuilder: (context, index) {
-          var item = state.days[index];
-          var minText = item.minTemperature.toText(state.temperatureUnit);
-          var text = item.maxTemperature.toText(state.temperatureUnit);
-          return SizedBox(
-            width: 88,
-            child: InkResponse(
-              onTap: () => context.read<WeatherCubit>().onDaySelected(index),
-              child: GridTile(
-                header: Text(
-                  item.weekDay.shortText(),
-                  textAlign: TextAlign.center,
-                ),
-                footer: Text('$minText/$text', textAlign: TextAlign.center),
-                child: Image.network(item.smallIconUri.toString()),
+        itemBuilder: (context, index) => _buildItem(context, state, index),
+      );
+
+  Material _buildItem(BuildContext context, LoadedState state, int index) {
+    var item = state.days[index];
+    var minText = item.minTemperature.toText(state.temperatureUnit);
+    var text = item.maxTemperature.toText(state.temperatureUnit);
+    var colorsScheme = Theme.of(context).colorScheme;
+    var selected = index == state.selectedDayIndex;
+    var textStyle = TextStyle(color: selected ? colorsScheme.primary : null);
+    return Material(
+      borderRadius: BorderRadius.circular(8),
+      color: selected ? colorsScheme.primaryContainer : null,
+      child: SizedBox(
+        width: 120,
+        child: InkResponse(
+          onTap: () => context.read<WeatherCubit>().onDaySelected(index),
+          child: GridTile(
+            header: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                item.weekDay.shortText(),
+                textAlign: TextAlign.center,
+                style: textStyle,
               ),
             ),
-          );
-        },
-      );
+            footer: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                '$minText/$text',
+                textAlign: TextAlign.center,
+                style: textStyle,
+              ),
+            ),
+            child: Image.network(item.smallIconUri.toString()),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 extension on WeekDay {

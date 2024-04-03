@@ -79,7 +79,7 @@ class Location {
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class WeatherData {
-  final List<Daily> list;
+  final List<Prediction> list;
 
   WeatherData({required this.list});
 
@@ -89,21 +89,22 @@ class WeatherData {
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class Daily {
+class Prediction {
   final int dt;
   final Main main;
   final List<Weather> weather;
   final Wind wind;
 
-  factory Daily.fromJson(Map<String, Object?> json) => _$DailyFromJson(json);
+  factory Prediction.fromJson(Map<String, Object?> json) =>
+      _$PredictionFromJson(json);
 
-  Daily({
+  Prediction({
     required this.dt,
     required this.main,
     required this.weather,
     required this.wind,
   });
-  Map<String, Object?> toJson() => _$DailyToJson(this);
+  Map<String, Object?> toJson() => _$PredictionToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
