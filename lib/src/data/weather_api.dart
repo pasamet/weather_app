@@ -30,6 +30,18 @@ class WeatherApi {
         Location.fromJson,
       );
 
+  // http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API key}
+  Future<WeatherData> forecast({
+    required double lat,
+    required double lon,
+  }) =>
+      _client.getJsonObject(
+        _resolveUri(
+          ['data', '2.5', 'forecast'],
+          {'lat': '$lat', 'lon': '$lon'},
+        ),
+        WeatherData.fromJson,
+      );
   Uri _resolveUri(
     Iterable<String> pathSegments,
     Map<String, String> queryParameters,
@@ -63,4 +75,82 @@ class Location {
   factory Location.fromJson(Map<String, Object?> json) =>
       _$LocationFromJson(json);
   Map<String, Object?> toJson() => _$LocationToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class WeatherData {
+  final List<Daily> list;
+
+  WeatherData({required this.list});
+
+  factory WeatherData.fromJson(Map<String, Object?> json) =>
+      _$WeatherDataFromJson(json);
+  Map<String, Object?> toJson() => _$WeatherDataToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Daily {
+  final int dt;
+  final Main main;
+  final List<Weather> weather;
+  final Wind wind;
+
+  factory Daily.fromJson(Map<String, Object?> json) => _$DailyFromJson(json);
+
+  Daily({
+    required this.dt,
+    required this.main,
+    required this.weather,
+    required this.wind,
+  });
+  Map<String, Object?> toJson() => _$DailyToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Main {
+  final double temp;
+  final double tempMin;
+  final double tempMax;
+  final double pressure;
+  final double humidity;
+
+  Main({
+    required this.temp,
+    required this.tempMin,
+    required this.tempMax,
+    required this.pressure,
+    required this.humidity,
+  });
+
+  factory Main.fromJson(Map<String, Object?> json) => _$MainFromJson(json);
+  Map<String, Object?> toJson() => _$MainToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Weather {
+  final int id;
+  final String main;
+  final String description;
+  final String icon;
+
+  Weather({
+    required this.id,
+    required this.main,
+    required this.description,
+    required this.icon,
+  });
+
+  factory Weather.fromJson(Map<String, Object?> json) =>
+      _$WeatherFromJson(json);
+  Map<String, Object?> toJson() => _$WeatherToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Wind {
+  final double speed;
+
+  factory Wind.fromJson(Map<String, Object?> json) => _$WindFromJson(json);
+
+  Wind({required this.speed});
+  Map<String, Object?> toJson() => _$WindToJson(this);
 }

@@ -6,6 +6,7 @@ import 'package:http/http.dart';
 import '../data/geocoding_repository.dart';
 import '../data/json_client.dart';
 import '../data/weather_api.dart';
+import '../data/weather_repository.dart';
 import 'configuration.dart';
 
 Future<void> setupDependencies(Configuration configuration) async {
@@ -27,6 +28,9 @@ Future<void> setupDependencies(Configuration configuration) async {
     )
     ..registerLazySingleton(
       () => GeocodingRepository(api: getIt()),
+    )
+    ..registerLazySingleton(
+      () => WeatherRepository(api: getIt()),
     );
   await getIt.allReady();
 }

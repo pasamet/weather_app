@@ -45,4 +45,12 @@ class _FakeWeatherApi implements WeatherApi {
       ),
     ];
   }
+
+  @override
+  Future<WeatherData> forecast({
+    required double lat,
+    required double lon,
+  }) {
+    throw AssertionError('Should not be called.');
+  }
 }
